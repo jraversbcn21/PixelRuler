@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PixelRuler</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <h1>PixelRuler</h1>
+    <button id="activate" data-en="Activate Measurement" data-es="Activar Medición">Activar Medición</button>
+    <button id="deactivate" disabled data-en="Deactivate Measurement" data-es="Desactivar Medición">Desactivar Medición</button>
+    <div class="info" data-en="Press ESC to exit" data-es="Presiona ESC para salir">Presiona ESC para salir</div>
+    
+    <div class="divider"></div>
+    
+    <div class="settings">
+      <div class="setting-label" data-en="Language" data-es="Idioma">Idioma</div>
+      <select id="language">
+        <option value="en">English</option>
+        <option value="es">Español</option>
+      </select>
+      
+      <div class="setting-label" data-en="Overlay Color" data-es="Color del Overlay">Color del Overlay</div>
+      <div class="color-picker">
+        <input type="color" id="overlayColor" value="#4285f4">
+        <button id="resetColor" data-en="Reset" data-es="Reiniciar">Reiniciar</button>
+      </div>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

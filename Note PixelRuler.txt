@@ -1,0 +1,16 @@
+Names for your web page measurement extension:
+
+PixelRuler
+MeasureMate
+PX Inspector
+WebPixelGauge
+ElementSizer
+
+
+"content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "css": ["content.css"],
+      "js": ["content.js"]
+    }
+  ]
