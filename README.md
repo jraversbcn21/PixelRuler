@@ -126,7 +126,7 @@ Si encuentras algún bug, por favor [abre un issue](https://github.com/tu-usuari
 
 ## 👨‍💻 Autor
 
-**Tu Nombre** - [@tu-usuario](https://github.com/tu-usuario)
+**Tu Nombre** - SidMaierLabs(https://github.com/jraversbcn21)
 
 ## 🙏 Agradecimientos
 
