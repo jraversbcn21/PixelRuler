@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Privacidad - PixelRuler</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            color: #4285f4;
+            border-bottom: 2px solid #4285f4;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #555;
+            margin-top: 30px;
+        }
+        .last-updated {
+            color: #666;
+            font-style: italic;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Política de Privacidad de PixelRuler</h1>
+    <p class="last-updated">Última actualización: <span id="date"></span></p>
+
+    <h2>1. Información que Recopilamos</h2>
+    <p>PixelRuler es una extensión de navegador que funciona completamente de forma local. <strong>No recopilamos, almacenamos ni transmitimos ningún dato personal o información del usuario a servidores externos.</strong></p>
+    
+    <p>La extensión únicamente:</p>
+    <ul>
+        <li><strong>Accede a la actividad del usuario</strong>: Detecta clics, movimiento del mouse y scroll únicamente cuando la extensión está activa, para medir elementos web.</li>
+        <li><strong>Accede al contenido de la página web</strong>: Lee el DOM y estilos de los elementos únicamente para mostrar información de medición.</li>
+        <li><strong>Almacena preferencias locales</strong>: Guarda únicamente en el navegador del usuario las preferencias de idioma y color del overlay mediante <code>chrome.storage.sync</code>.</li>
+    </ul>
+
+    <h2>2. Uso de la Información</h2>
+    <p>Toda la información accedida se procesa exclusivamente en el navegador del usuario. No se envía, vende, comparte ni transfiere ningún dato a terceros o servidores externos.</p>
+    
+    <p>Las preferencias guardadas (idioma y color) se sincronizan únicamente entre los dispositivos del usuario a través de la cuenta de Chrome, y no son accesibles para nosotros ni para terceros.</p>
+
+    <h2>3. Permisos de la Extensión</h2>
+    <p>PixelRuler requiere los siguientes permisos:</p>
+    <ul>
+        <li><strong>activeTab</strong>: Para acceder a la pestaña activa cuando el usuario activa la extensión.</li>
+        <li><strong>scripting</strong>: Para inyectar el script necesario para medir elementos.</li>
+        <li><strong>tabs</strong>: Para identificar la pestaña activa y comunicarse con el script inyectado.</li>
+        <li><strong>storage</strong>: Para guardar las preferencias del usuario (idioma y color).</li>
+    </ul>
+    <p>Todos estos permisos se utilizan exclusivamente para el funcionamiento de la extensión y no para recopilar datos personales.</p>
+
+    <h2>4. Datos de Terceros</h2>
+    <p><strong>No vendemos, transferimos ni compartimos datos con terceros.</strong> PixelRuler no utiliza servicios de terceros para analítica, publicidad o cualquier otro propósito.</p>
+
+    <h2>5. Seguridad</h2>
+    <p>Dado que PixelRuler funciona completamente de forma local y no transmite datos, no hay riesgo de interceptación o acceso no autorizado a información del usuario.</p>
+
+    <h2>6. Cambios en esta Política</h2>
+    <p>Nos reservamos el derecho de actualizar esta política de privacidad. Cualquier cambio será reflejado en esta página con la fecha de última actualización.</p>
+
+    <h2>7. Contacto</h2>
+    <p>Si tienes preguntas sobre esta política de privacidad, puedes contactarnos a través del repositorio del proyecto en GitHub o la página de la extensión en Chrome Web Store.</p>
+
+    <hr>
+    <p style="text-align: center; color: #666; margin-top: 40px;">
+        PixelRuler - Herramienta de Medición de Elementos Web<br>
+        <small>Esta política de privacidad garantiza que tu privacidad está completamente protegida.</small>
+    </p>
+
+    <script>
+        document.getElementById('date').textContent = new Date().toLocaleDateString('es-ES', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+    </script>
+</body>
+</html>
