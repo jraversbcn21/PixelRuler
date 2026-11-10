@@ -47,6 +47,11 @@ let currentTooltips = [];
 let currentLang = 'es';
 let overlayColor = '#4285f4';
 
+// Box model overlays: padding/margin rings as 4 strips each (top, right, bottom, left)
+let paddingEdges = [];
+let marginEdges = [];
+let borderOverlay = null;
+
 // Load settings from storage
 function loadSettings() {
   chrome.storage.sync.get(['language', 'overlayColor'], (result) => {
@@ -152,6 +157,26 @@ function createOverlay() {
   infoBox.id = 'pixelruler-infobox';
   infoBox.style.display = 'none';
   document.body.appendChild(infoBox);
+
+  // Create box model overlays
+  createBoxModelOverlays();
+}
+
+// Function to create box model overlays
+function createBoxModelOverlays() {
+  const make = (className) => {
+    const el = document.createElement('div');
+    el.className = className;
+    document.body.appendChild(el);
+    return el;
+  };
+  paddingEdges = [0, 1, 2, 3].map(() => make('pixelruler-padding-edge'));
+  marginEdges = [0, 1, 2, 3].map(() => make('pixelruler-margin-edge'));
+  borderOverlay = make('pixelruler-border-overlay');
+}
+
+function allBoxModelOverlays() {
+  return [borderOverlay, ...paddingEdges, ...marginEdges].filter(Boolean);
 }
 
 // Function to remove the overlay
@@ -164,6 +189,13 @@ function removeOverlay() {
     infoBox.remove();
     infoBox = null;
   }
+  
+  // Remove box model overlays
+  allBoxModelOverlays().forEach(el => el.remove());
+  paddingEdges = [];
+  marginEdges = [];
+  borderOverlay = null;
+
   // Clean up any remaining tooltips more thoroughly
   currentTooltips.forEach(tooltip => {
     if (tooltip && tooltip.parentNode) {
@@ -364,15 +396,74 @@ function showDimensions(element) {
   // Remove the auto-timeout, tooltip will persist until next click
 }
 
+// Position an overlay, or hide it when it has no area
+function placeBox(el, left, top, width, height) {
+  if (width > 0 && height > 0) {
+    Object.assign(el.style, {
+      left: `${left}px`, top: `${top}px`,
+      width: `${width}px`, height: `${height}px`,
+      display: 'block'
+    });
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+// Function to show box model overlays
+function showBoxModelOverlays(element) {
+  if (!borderOverlay) return;
+  const cs = window.getComputedStyle(element);
+  const rect = element.getBoundingClientRect();
+  const px = (prop) => parseFloat(cs[prop]) || 0;
+  const sides = (prefix, suffix = '') =>
+    ['Top', 'Right', 'Bottom', 'Left'].map(s => px(prefix + s + suffix));
+
+  const [mt, mr, mb, ml] = sides('margin');
+  const [pt, pr, pb, pl] = sides('padding');
+  const [bt, br, bb, bl] = sides('border', 'Width');
+
+  // Border box, in page coordinates
+  const left = rect.left + window.scrollX;
+  const top = rect.top + window.scrollY;
+  const w = rect.width;
+  const h = rect.height;
+
+  // Border (only when the element has one)
+  placeBox(borderOverlay, left, top, (bt || br || bb || bl) ? w : 0, h);
+
+  // Padding ring, inside the border
+  const il = left + bl, it = top + bt, iw = w - bl - br, ih = h - bt - bb;
+  placeBox(paddingEdges[0], il, it, iw, pt);
+  placeBox(paddingEdges[1], il + iw - pr, it, pr, ih);
+  placeBox(paddingEdges[2], il, it + ih - pb, iw, pb);
+  placeBox(paddingEdges[3], il, it, pl, ih);
+
+  // Margin ring, outside the border box (negative margins are skipped)
+  placeBox(marginEdges[0], left, top - mt, w, mt);
+  placeBox(marginEdges[1], left + w, top, mr, h);
+  placeBox(marginEdges[2], left, top + h, w, mb);
+  placeBox(marginEdges[3], left - ml, top, ml, h);
+}
+
+// Function to hide box model overlays
+function hideBoxModelOverlays() {
+  allBoxModelOverlays().forEach(el => { el.style.display = 'none'; });
+}
+
 // Mouse move handler
 function onMouseMove(e) {
   if (!isActive) return;
   const element = document.elementFromPoint(e.clientX, e.clientY);
   
-  if (element && element !== overlay && element !== infoBox && !element.classList.contains('pixelruler-tooltip')) {
+  if (element && element !== overlay && element !== infoBox && !element.classList.contains('pixelruler-tooltip') &&
+      !element.id.includes('pixelruler-')) {
     selectedElement = element;
     const rect = element.getBoundingClientRect();
     
+    // Show box model overlays
+    showBoxModelOverlays(element);
+    
+    // Update main overlay
     overlay.style.width = `${rect.width}px`;
     overlay.style.height = `${rect.height}px`;
     overlay.style.top = `${rect.top + window.scrollY}px`;
@@ -398,6 +489,11 @@ function onMouseMove(e) {
     
     infoBox.style.top = `${infoTop + window.scrollY}px`;
     infoBox.style.left = `${infoLeft + window.scrollX}px`;
+  } else {
+    // Hide overlays when not hovering over a valid element
+    hideBoxModelOverlays();
+    overlay.style.display = 'none';
+    infoBox.style.display = 'none';
   }
 }
 
@@ -459,6 +555,9 @@ function onScroll() {
   const rect = selectedElement.getBoundingClientRect();
   overlay.style.top = `${rect.top + window.scrollY}px`;
   overlay.style.left = `${rect.left + window.scrollX}px`;
+  
+  // Update box model overlays
+  showBoxModelOverlays(selectedElement);
 }
 
 // Activate measurement mode
