@@ -65,6 +65,17 @@ button:not(:disabled):hover {
   font-weight: 300;
 }
 
+kbd {
+  font-family: inherit;
+  font-size: 11px;
+  padding: 1px 5px;
+  border: 1px solid #ccc;
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background-color: #fff;
+  color: #333;
+}
+
 .divider {
   height: 1px;
   background-color: #ddd;

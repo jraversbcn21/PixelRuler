@@ -42,6 +42,17 @@ document.addEventListener('DOMContentLoaded', () => {
   // Load saved settings
   loadSettings();
 
+  // Show the user's actual toggle shortcut (it can be changed in chrome://extensions/shortcuts)
+  chrome.commands.getAll((commands) => {
+    const toggle = commands.find(c => c.name === 'toggle-measurement');
+    if (toggle && toggle.shortcut) {
+      // Chrome localizes key names ("Mayús" in Spanish); show the key as labeled in the docs
+      document.getElementById('shortcut').textContent = toggle.shortcut.replace('Mayús', 'Shift');
+    } else {
+      document.getElementById('shortcutHint').hidden = true;
+    }
+  });
+
   // Language change handler
   languageSelect.addEventListener('change', (e) => {
     const lang = e.target.value;
