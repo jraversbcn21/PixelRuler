@@ -44,3 +44,6 @@ yarn-error.log*
 # Carpetas de distribución
 dist/
 build/
+
+# Notas personales
+*.txt

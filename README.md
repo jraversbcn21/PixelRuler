@@ -20,7 +20,7 @@ Una extensión de Chrome para medir dimensiones de elementos web con informació
 
 1. **Descarga o clona este repositorio**
    ```bash
-   git clone https://github.com/tu-usuario/PixelRuler.git
+   git clone https://github.com/jraversbcn21/PixelRuler.git
    ```
 
 2. **Abre Chrome y ve a las extensiones**
@@ -110,7 +110,7 @@ Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) par
 
 ## 🐛 Reportar bugs
 
-Si encuentras algún bug, por favor [abre un issue](https://github.com/tu-usuario/PixelRuler/issues) con:
+Si encuentras algún bug, por favor [abre un issue](https://github.com/jraversbcn21/PixelRuler/issues) con:
 - Descripción del problema
 - Pasos para reproducirlo
 - Versión de Chrome
@@ -126,7 +126,7 @@ Si encuentras algún bug, por favor [abre un issue](https://github.com/tu-usuari
 
 ## 👨‍💻 Autor
 
-**Tu Nombre** - SidMaierLabs(https://github.com/jraversbcn21)
+**SidMaierLabs** - [@jraversbcn21](https://github.com/jraversbcn21)
 
 ## 🙏 Agradecimientos
 
