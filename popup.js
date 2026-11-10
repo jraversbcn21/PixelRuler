@@ -104,11 +104,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
             activateBtn.disabled = true;
             deactivateBtn.disabled = false;
+            // Cerrar el popup al activar medición
+            window.close();
           });
         } else {
           // Script ya estaba inyectado y se activó correctamente
           activateBtn.disabled = true;
           deactivateBtn.disabled = false;
+          // Cerrar el popup al activar medición
+          window.close();
         }
       });
     });
