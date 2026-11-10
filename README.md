@@ -7,6 +7,9 @@ Una extensión de Chrome para medir dimensiones de elementos web con informació
 - **Medición de dimensiones**: Ancho, alto y posición de elementos
 - **Información de tipografía**: Tamaño de fuente, familia, peso, altura de línea y color (en hexadecimal)
 - **Información de espaciado**: Márgenes, relleno y bordes
+- **Box model visual**: Padding, borde y margen resaltados con colores al hacer hover
+- **Distancia entre elementos**: Mantén Alt para medir los px entre dos elementos, como en Figma
+- **Atajo de teclado**: `Alt+Shift+Z` activa y desactiva la medición sin abrir el popup
 - **Interfaz intuitiva**: Hover para vista previa, clic para información detallada
 - **Tooltip persistente**: La información permanece visible hasta el siguiente clic
 - **Posicionamiento inteligente**: El tooltip aparece al costado sin tapar el elemento
@@ -37,36 +40,42 @@ Una extensión de Chrome para medir dimensiones de elementos web con informació
 ## 🎯 Cómo usar
 
 1. **Activa la extensión**
-   - Haz clic en el icono de PixelRuler en la barra de herramientas
-   - Presiona "Activar Medición"
+   - Pulsa `Alt+Shift+Z`, o
+   - Haz clic en el icono de PixelRuler en la barra de herramientas y presiona "Activar Medición"
 
 2. **Navega y mide**
-   - Mueve el cursor sobre cualquier elemento para ver dimensiones básicas
+   - Mueve el cursor sobre cualquier elemento para ver sus dimensiones y su box model (padding en morado, borde en amarillo, margen en naranja)
    - Haz clic en un elemento para ver información detallada
 
-3. **Información disponible**
+3. **Mide distancias entre elementos**
+   - Pon el cursor sobre un elemento y mantén pulsado **Alt**: queda fijado con un contorno rojo
+   - Sin soltar Alt, pasa el cursor sobre otro elemento para ver la distancia en px
+   - Suelta Alt para volver al modo normal
+
+4. **Información disponible**
    - **Dimensiones**: Ancho, alto, posición X/Y
    - **Tipografía**: Tamaño, familia, peso, altura de línea, color
    - **Espaciado**: Márgenes, relleno, bordes
 
-4. **Copia información**
+5. **Copia información**
    - Haz clic derecho en el tooltip para copiar toda la información
 
-5. **Desactiva**
-   - Presiona ESC o haz clic en "Desactivar Medición"
+6. **Desactiva**
+   - Pulsa `Alt+Shift+Z`, presiona ESC o haz clic en "Desactivar Medición"
 
 ## ⚙️ Configuración
 
 - **Idioma**: Cambia entre español e inglés
 - **Color del overlay**: Personaliza el color de resaltado
 - **Reiniciar color**: Vuelve al color por defecto
+- **Atajo de teclado**: Si `Alt+Shift+Z` no responde, asígnalo (o cámbialo) en `chrome://extensions/shortcuts`
 
 ## 🛠️ Tecnologías
 
 - **Manifest V3**: Última versión de extensiones de Chrome
 - **JavaScript vanilla**: Sin dependencias externas
 - **CSS3**: Estilos modernos y responsivos
-- **Chrome APIs**: Storage, Scripting, Tabs
+- **Chrome APIs**: Storage, Scripting, Tabs, Commands
 
 ## 📁 Estructura del proyecto
 
@@ -78,6 +87,10 @@ PixelRuler/
 ├── popup.css              # Estilos del popup
 ├── content.js             # Script de contenido principal
 ├── content.css            # Estilos para el overlay y tooltips
+├── measure.js             # Geometría de distancias entre elementos
+├── measure.test.js        # Test de la geometría (node measure.test.js)
+├── background.js          # Atajo de teclado
+├── privacy-policy.html    # Política de privacidad
 ├── icons/                 # Iconos de la extensión
 │   ├── icon16.png
 │   ├── icon48.png
