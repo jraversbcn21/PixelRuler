@@ -27,7 +27,7 @@
   },
   "commands": {
     "toggle-measurement": {
-      "suggested_key": { "default": "Alt+Shift+Z" },
+      "suggested_key": { "default": "Ctrl+Shift+X" },
       "description": "Activate / deactivate measurement"
     }
   },

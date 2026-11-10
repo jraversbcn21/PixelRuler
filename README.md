@@ -9,7 +9,7 @@ Una extensión de Chrome para medir dimensiones de elementos web con informació
 - **Información de espaciado**: Márgenes, relleno y bordes
 - **Box model visual**: Padding, borde y margen resaltados con colores al hacer hover
 - **Distancia entre elementos**: Mantén Alt para medir los px entre dos elementos, como en Figma
-- **Atajo de teclado**: `Alt+Shift+Z` activa y desactiva la medición sin abrir el popup
+- **Atajo de teclado**: `Ctrl+Shift+X` activa y desactiva la medición sin abrir el popup
 - **Interfaz intuitiva**: Hover para vista previa, clic para información detallada
 - **Tooltip persistente**: La información permanece visible hasta el siguiente clic
 - **Posicionamiento inteligente**: El tooltip aparece al costado sin tapar el elemento
@@ -40,7 +40,7 @@ Una extensión de Chrome para medir dimensiones de elementos web con informació
 ## 🎯 Cómo usar
 
 1. **Activa la extensión**
-   - Pulsa `Alt+Shift+Z`, o
+   - Pulsa `Ctrl+Shift+X`, o
    - Haz clic en el icono de PixelRuler en la barra de herramientas y presiona "Activar Medición"
 
 2. **Navega y mide**
@@ -61,14 +61,14 @@ Una extensión de Chrome para medir dimensiones de elementos web con informació
    - Haz clic derecho en el tooltip para copiar toda la información
 
 6. **Desactiva**
-   - Pulsa `Alt+Shift+Z`, presiona ESC o haz clic en "Desactivar Medición"
+   - Pulsa `Ctrl+Shift+X`, presiona ESC o haz clic en "Desactivar Medición"
 
 ## ⚙️ Configuración
 
 - **Idioma**: Cambia entre español e inglés
 - **Color del overlay**: Personaliza el color de resaltado
 - **Reiniciar color**: Vuelve al color por defecto
-- **Atajo de teclado**: Si `Alt+Shift+Z` no responde, asígnalo (o cámbialo) en `chrome://extensions/shortcuts`
+- **Atajo de teclado**: Si `Ctrl+Shift+X` no responde, asígnalo (o cámbialo) en `chrome://extensions/shortcuts`
 
 ## 🛠️ Tecnologías
 

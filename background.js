@@ -1,4 +1,4 @@
-// Keyboard shortcut (Alt+Shift+Z by default): toggle measurement on the active tab
+// Keyboard shortcut (Ctrl+Shift+X by default): toggle measurement on the active tab
 chrome.commands.onCommand.addListener((command) => {
   if (command !== 'toggle-measurement') return;
   chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
