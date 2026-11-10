@@ -22,6 +22,15 @@
       "128": "icons/icon128.png"
     }
   },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "commands": {
+    "toggle-measurement": {
+      "suggested_key": { "default": "Alt+Shift+Z" },
+      "description": "Activate / deactivate measurement"
+    }
+  },
   "web_accessible_resources": [
     {
       "resources": ["content.css"],

@@ -43,6 +43,37 @@
   z-index: 2147483635; /* Más bajo que el elemento principal */
 }
 
+/* Distance measurement (Alt + hover) */
+.pixelruler-anchor,
+.pixelruler-distance-line,
+.pixelruler-distance-label {
+  box-sizing: border-box;
+  pointer-events: none;
+  position: absolute;
+  display: none;
+}
+
+.pixelruler-anchor {
+  border: 1px dashed #f24822;
+  z-index: 2147483641;
+}
+
+.pixelruler-distance-line {
+  background-color: #f24822;
+  z-index: 2147483642;
+}
+
+.pixelruler-distance-label {
+  transform: translate(-50%, -50%);
+  background-color: #f24822;
+  color: #fff;
+  padding: 1px 4px;
+  border-radius: 2px;
+  font: 500 11px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  white-space: nowrap;
+  z-index: 2147483643;
+}
+
 /* Info box that follows cursor */
 #pixelruler-infobox {
   box-sizing: border-box;

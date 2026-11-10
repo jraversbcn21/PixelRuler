@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
           console.log('Script not injected yet, injecting...');
           chrome.scripting.executeScript({
             target: { tabId: tab.id },
-            files: ['content.js']
+            files: ['measure.js', 'content.js']
           }, () => {
             if (chrome.runtime.lastError) {
               console.error(`Script injection failed: ${chrome.runtime.lastError.message}`);

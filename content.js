@@ -52,6 +52,13 @@ let paddingEdges = [];
 let marginEdges = [];
 let borderOverlay = null;
 
+// Distance measurement: holding Alt anchors the hovered element, hovering others measures to it
+let anchorElement = null;
+let anchorOutline = null;
+let distanceLines = [];
+let distanceLabels = [];
+let altDown = false;
+
 // Load settings from storage
 function loadSettings() {
   chrome.storage.sync.get(['language', 'overlayColor'], (result) => {
@@ -173,10 +180,19 @@ function createBoxModelOverlays() {
   paddingEdges = [0, 1, 2, 3].map(() => make('pixelruler-padding-edge'));
   marginEdges = [0, 1, 2, 3].map(() => make('pixelruler-margin-edge'));
   borderOverlay = make('pixelruler-border-overlay');
+
+  // Distance overlays: anchor outline + up to 4 lines with labels
+  anchorOutline = make('pixelruler-anchor');
+  distanceLines = [0, 1, 2, 3].map(() => make('pixelruler-distance-line'));
+  distanceLabels = [0, 1, 2, 3].map(() => make('pixelruler-distance-label'));
 }
 
 function allBoxModelOverlays() {
   return [borderOverlay, ...paddingEdges, ...marginEdges].filter(Boolean);
+}
+
+function allDistanceOverlays() {
+  return [...distanceLines, ...distanceLabels];
 }
 
 // Function to remove the overlay
@@ -195,6 +211,14 @@ function removeOverlay() {
   paddingEdges = [];
   marginEdges = [];
   borderOverlay = null;
+
+  // Remove distance overlays
+  [anchorOutline, ...allDistanceOverlays()].forEach(el => el && el.remove());
+  anchorOutline = null;
+  distanceLines = [];
+  distanceLabels = [];
+  anchorElement = null;
+  altDown = false;
 
   // Clean up any remaining tooltips more thoroughly
   currentTooltips.forEach(tooltip => {
@@ -450,6 +474,47 @@ function hideBoxModelOverlays() {
   allBoxModelOverlays().forEach(el => { el.style.display = 'none'; });
 }
 
+// Outline the anchor element, or hide the outline when there is none
+function placeAnchorOutline() {
+  if (!anchorOutline) return;
+  if (!anchorElement) {
+    anchorOutline.style.display = 'none';
+    return;
+  }
+  const r = anchorElement.getBoundingClientRect();
+  placeBox(anchorOutline, r.left + window.scrollX, r.top + window.scrollY, r.width, r.height);
+}
+
+// With Alt held over another element, draw distance lines to the anchor;
+// otherwise show the hovered element's box model
+function updateDistances() {
+  const target = selectedElement;
+  const segs = altDown && anchorElement && target && target !== anchorElement
+    ? measureGap(anchorElement.getBoundingClientRect(), target.getBoundingClientRect())
+    : [];
+
+  distanceLines.forEach((line, i) => {
+    const s = segs[i];
+    const label = distanceLabels[i];
+    if (!s) {
+      line.style.display = 'none';
+      label.style.display = 'none';
+      return;
+    }
+    const horizontal = s.y1 === s.y2;
+    const x = Math.min(s.x1, s.x2) + window.scrollX;
+    const y = Math.min(s.y1, s.y2) + window.scrollY;
+    placeBox(line, x, y, horizontal ? s.length : 1, horizontal ? 1 : s.length);
+    label.textContent = `${Math.round(s.length)}`;
+    label.style.left = `${(s.x1 + s.x2) / 2 + window.scrollX}px`;
+    label.style.top = `${(s.y1 + s.y2) / 2 + window.scrollY}px`;
+    label.style.display = 'block';
+  });
+
+  if (segs.length > 0) hideBoxModelOverlays();
+  else if (target) showBoxModelOverlays(target);
+}
+
 // Mouse move handler
 function onMouseMove(e) {
   if (!isActive) return;
@@ -460,9 +525,10 @@ function onMouseMove(e) {
     selectedElement = element;
     const rect = element.getBoundingClientRect();
     
-    // Show box model overlays
-    showBoxModelOverlays(element);
-    
+    // Distance lines (Alt) or box model overlays
+    setAltDown(e.altKey); // also catches Alt pressed/released while the page lacked focus
+    updateDistances();
+
     // Update main overlay
     overlay.style.width = `${rect.width}px`;
     overlay.style.height = `${rect.height}px`;
@@ -492,6 +558,7 @@ function onMouseMove(e) {
   } else {
     // Hide overlays when not hovering over a valid element
     hideBoxModelOverlays();
+    allDistanceOverlays().forEach(el => { el.style.display = 'none'; });
     overlay.style.display = 'none';
     infoBox.style.display = 'none';
   }
@@ -530,10 +597,22 @@ function onClick(e) {
   }
 }
 
-// Keyboard handler for ESC
+// Pressing Alt anchors the hovered element; releasing it drops the anchor
+function setAltDown(down) {
+  if (down === altDown) return;
+  altDown = down;
+  anchorElement = down ? selectedElement : null;
+  placeAnchorOutline();
+}
+
+// Keyboard handler: Alt starts distance measuring, ESC closes tooltip or deactivates
 function onKeyDown(e) {
   if (!isActive) return;
-  if (e.key === 'Escape') {
+  if (e.key === 'Alt') {
+    e.preventDefault();
+    setAltDown(true);
+    updateDistances();
+  } else if (e.key === 'Escape') {
     // Close any visible tooltips first
     if (currentTooltips.length > 0) {
       currentTooltips.forEach(tooltip => {
@@ -549,6 +628,14 @@ function onKeyDown(e) {
   }
 }
 
+// Releasing Alt goes back to the box model; preventDefault stops Chrome focusing its menu
+function onKeyUp(e) {
+  if (!isActive || e.key !== 'Alt') return;
+  e.preventDefault();
+  setAltDown(false);
+  updateDistances();
+}
+
 // Scroll handler to update overlay position
 function onScroll() {
   if (!isActive || !selectedElement) return;
@@ -556,8 +643,9 @@ function onScroll() {
   overlay.style.top = `${rect.top + window.scrollY}px`;
   overlay.style.left = `${rect.left + window.scrollX}px`;
   
-  // Update box model overlays
-  showBoxModelOverlays(selectedElement);
+  // Update anchor, distance and box model overlays
+  placeAnchorOutline();
+  updateDistances();
 }
 
 // Activate measurement mode
@@ -569,6 +657,7 @@ function activate() {
   document.addEventListener('mousemove', onMouseMove);
   document.addEventListener('click', onClick, true);
   document.addEventListener('keydown', onKeyDown);
+  document.addEventListener('keyup', onKeyUp);
   document.addEventListener('scroll', onScroll);
   document.body.style.cursor = 'crosshair';
   console.log('PixelRuler activado');
@@ -582,6 +671,7 @@ function deactivate() {
   document.removeEventListener('mousemove', onMouseMove);
   document.removeEventListener('click', onClick, true);
   document.removeEventListener('keydown', onKeyDown);
+  document.removeEventListener('keyup', onKeyUp);
   document.removeEventListener('scroll', onScroll);
   document.body.style.cursor = '';
   selectedElement = null;
@@ -596,6 +686,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   } else if (request.action === 'deactivate') {
     deactivate();
     sendResponse({ status: 'deactivated' });
+  } else if (request.action === 'toggle') {
+    isActive ? deactivate() : activate();
+    sendResponse({ status: isActive ? 'activated' : 'deactivated' });
   } else if (request.action === 'updateSettings') {
     if (request.language) {
       currentLang = request.language;
