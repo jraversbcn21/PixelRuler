@@ -98,17 +98,6 @@ PixelRuler/
 └── README.md              # Este archivo
 ```
 
-## 🎨 Capturas de pantalla
-
-### Medición básica
-![Medición básica](screenshots/basic-measurement.png)
-
-### Información detallada
-![Información detallada](screenshots/detailed-info.png)
-
-### Configuración
-![Configuración](screenshots/settings.png)
-
 ## 🤝 Contribuir
 
 1. Fork el proyecto
