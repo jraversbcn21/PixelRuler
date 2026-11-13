@@ -1,9 +1,4 @@
-// Inject content.css
-const link = document.createElement('link');
-link.rel = 'stylesheet';
-link.type = 'text/css';
-link.href = chrome.runtime.getURL('content.css');
-document.head.appendChild(link);
+// content.css is injected by the popup / background (chrome.scripting.insertCSS) before this script runs
 
 // Translations
 const translations = {
@@ -58,6 +53,9 @@ let anchorOutline = null;
 let distanceLines = [];
 let distanceLabels = [];
 let altDown = false;
+
+// Pending requestAnimationFrame for scroll updates (0 = none)
+let scrollFrame = 0;
 
 // Load settings from storage
 function loadSettings() {
@@ -433,22 +431,25 @@ function placeBox(el, left, top, width, height) {
   }
 }
 
-// Function to show box model overlays
-function showBoxModelOverlays(element) {
-  if (!borderOverlay) return;
+// Read an element's margin / padding / border widths, as [top, right, bottom, left]
+function readBoxModel(element) {
   const cs = window.getComputedStyle(element);
-  const rect = element.getBoundingClientRect();
   const px = (prop) => parseFloat(cs[prop]) || 0;
   const sides = (prefix, suffix = '') =>
     ['Top', 'Right', 'Bottom', 'Left'].map(s => px(prefix + s + suffix));
+  return { margin: sides('margin'), padding: sides('padding'), border: sides('border', 'Width') };
+}
 
-  const [mt, mr, mb, ml] = sides('margin');
-  const [pt, pr, pb, pl] = sides('padding');
-  const [bt, br, bb, bl] = sides('border', 'Width');
+// Draw the box model overlays (write-only: everything is measured beforehand)
+function drawBoxModel(rect, box, scrollX, scrollY) {
+  if (!borderOverlay) return;
+  const [mt, mr, mb, ml] = box.margin;
+  const [pt, pr, pb, pl] = box.padding;
+  const [bt, br, bb, bl] = box.border;
 
   // Border box, in page coordinates
-  const left = rect.left + window.scrollX;
-  const top = rect.top + window.scrollY;
+  const left = rect.left + scrollX;
+  const top = rect.top + scrollY;
   const w = rect.width;
   const h = rect.height;
 
@@ -474,25 +475,8 @@ function hideBoxModelOverlays() {
   allBoxModelOverlays().forEach(el => { el.style.display = 'none'; });
 }
 
-// Outline the anchor element, or hide the outline when there is none
-function placeAnchorOutline() {
-  if (!anchorOutline) return;
-  if (!anchorElement) {
-    anchorOutline.style.display = 'none';
-    return;
-  }
-  const r = anchorElement.getBoundingClientRect();
-  placeBox(anchorOutline, r.left + window.scrollX, r.top + window.scrollY, r.width, r.height);
-}
-
-// With Alt held over another element, draw distance lines to the anchor;
-// otherwise show the hovered element's box model
-function updateDistances() {
-  const target = selectedElement;
-  const segs = altDown && anchorElement && target && target !== anchorElement
-    ? measureGap(anchorElement.getBoundingClientRect(), target.getBoundingClientRect())
-    : [];
-
+// Draw the distance segments, hiding unused lines/labels (write-only)
+function drawDistances(segs, scrollX, scrollY) {
   distanceLines.forEach((line, i) => {
     const s = segs[i];
     const label = distanceLabels[i];
@@ -502,66 +486,104 @@ function updateDistances() {
       return;
     }
     const horizontal = s.y1 === s.y2;
-    const x = Math.min(s.x1, s.x2) + window.scrollX;
-    const y = Math.min(s.y1, s.y2) + window.scrollY;
+    const x = Math.min(s.x1, s.x2) + scrollX;
+    const y = Math.min(s.y1, s.y2) + scrollY;
     placeBox(line, x, y, horizontal ? s.length : 1, horizontal ? 1 : s.length);
     label.textContent = `${Math.round(s.length)}`;
-    label.style.left = `${(s.x1 + s.x2) / 2 + window.scrollX}px`;
-    label.style.top = `${(s.y1 + s.y2) / 2 + window.scrollY}px`;
+    label.style.left = `${(s.x1 + s.x2) / 2 + scrollX}px`;
+    label.style.top = `${(s.y1 + s.y2) / 2 + scrollY}px`;
     label.style.display = 'block';
   });
+}
 
-  if (segs.length > 0) hideBoxModelOverlays();
-  else if (target) showBoxModelOverlays(target);
+// Redraw every overlay for the hovered element and the anchor.
+// All layout reads happen first, then all writes, so it costs at most one reflow.
+// With Alt held over another element it draws distance lines; otherwise the box model.
+// Returns the hovered element's rect (or null).
+function render() {
+  if (!overlay) return null;
+  const target = selectedElement;
+
+  // Read phase
+  const scrollX = window.scrollX;
+  const scrollY = window.scrollY;
+  const anchorRect = anchorElement ? anchorElement.getBoundingClientRect() : null;
+  const rect = target ? target.getBoundingClientRect() : null;
+  const segs = altDown && anchorRect && rect && target !== anchorElement
+    ? measureGap(anchorRect, rect)
+    : [];
+  const box = rect && segs.length === 0 ? readBoxModel(target) : null;
+
+  // Write phase
+  if (anchorRect) {
+    placeBox(anchorOutline, anchorRect.left + scrollX, anchorRect.top + scrollY, anchorRect.width, anchorRect.height);
+  } else {
+    anchorOutline.style.display = 'none';
+  }
+  drawDistances(segs, scrollX, scrollY);
+  if (!rect) return null;
+
+  overlay.style.width = `${rect.width}px`;
+  overlay.style.height = `${rect.height}px`;
+  overlay.style.top = `${rect.top + scrollY}px`;
+  overlay.style.left = `${rect.left + scrollX}px`;
+  overlay.style.display = 'block';
+
+  if (box) drawBoxModel(rect, box, scrollX, scrollY);
+  else hideBoxModelOverlays();
+  return rect;
+}
+
+// Hide everything tied to the hovered element (the anchor outline stays)
+function hideHoverOverlays() {
+  hideBoxModelOverlays();
+  allDistanceOverlays().forEach(el => { el.style.display = 'none'; });
+  overlay.style.display = 'none';
+  infoBox.style.display = 'none';
+}
+
+// Position the size label near the cursor
+function placeInfoBox(e) {
+  let infoTop = e.clientY + 15;
+  let infoLeft = e.clientX + 15;
+
+  if (infoTop + 30 > window.innerHeight) {
+    infoTop = e.clientY - 35;
+  }
+  if (infoLeft + 100 > window.innerWidth) {
+    infoLeft = e.clientX - 115;
+  }
+
+  infoBox.style.top = `${infoTop + window.scrollY}px`;
+  infoBox.style.left = `${infoLeft + window.scrollX}px`;
 }
 
 // Mouse move handler
 function onMouseMove(e) {
   if (!isActive) return;
   const element = document.elementFromPoint(e.clientX, e.clientY);
-  
-  if (element && element !== overlay && element !== infoBox && !element.classList.contains('pixelruler-tooltip') &&
-      !element.id.includes('pixelruler-')) {
-    selectedElement = element;
-    const rect = element.getBoundingClientRect();
-    
-    // Distance lines (Alt) or box model overlays
-    setAltDown(e.altKey); // also catches Alt pressed/released while the page lacked focus
-    updateDistances();
+  const valid = element && element !== overlay && element !== infoBox &&
+    !element.classList.contains('pixelruler-tooltip') && !element.id.includes('pixelruler-');
 
-    // Update main overlay
-    overlay.style.width = `${rect.width}px`;
-    overlay.style.height = `${rect.height}px`;
-    overlay.style.top = `${rect.top + window.scrollY}px`;
-    overlay.style.left = `${rect.left + window.scrollX}px`;
-    overlay.style.display = 'block';
-
-    // Update info box
-    const width = Math.round(rect.width);
-    const height = Math.round(rect.height);
-    infoBox.textContent = `${width} × ${height}px`;
-    infoBox.style.display = 'block';
-    
-    // Position info box near cursor
-    let infoTop = e.clientY + 15;
-    let infoLeft = e.clientX + 15;
-    
-    if (infoTop + 30 > window.innerHeight) {
-      infoTop = e.clientY - 35;
-    }
-    if (infoLeft + 100 > window.innerWidth) {
-      infoLeft = e.clientX - 115;
-    }
-    
-    infoBox.style.top = `${infoTop + window.scrollY}px`;
-    infoBox.style.left = `${infoLeft + window.scrollX}px`;
-  } else {
+  if (!valid) {
     // Hide overlays when not hovering over a valid element
-    hideBoxModelOverlays();
-    allDistanceOverlays().forEach(el => { el.style.display = 'none'; });
-    overlay.style.display = 'none';
-    infoBox.style.display = 'none';
+    if (selectedElement) {
+      selectedElement = null;
+      hideHoverOverlays();
+    }
+    return;
   }
+
+  // Only re-measure when the hovered element or the Alt state changes;
+  // moving within the same element just moves the size label
+  if (element !== selectedElement || e.altKey !== altDown) {
+    selectedElement = element;
+    setAltDown(e.altKey); // also catches Alt pressed/released while the page lacked focus
+    const rect = render();
+    infoBox.textContent = `${Math.round(rect.width)} × ${Math.round(rect.height)}px`;
+    infoBox.style.display = 'block';
+  }
+  placeInfoBox(e);
 }
 
 // Click handler
@@ -602,7 +624,6 @@ function setAltDown(down) {
   if (down === altDown) return;
   altDown = down;
   anchorElement = down ? selectedElement : null;
-  placeAnchorOutline();
 }
 
 // Keyboard handler: Alt starts distance measuring, ESC closes tooltip or deactivates
@@ -610,8 +631,9 @@ function onKeyDown(e) {
   if (!isActive) return;
   if (e.key === 'Alt') {
     e.preventDefault();
+    if (altDown) return; // key auto-repeat
     setAltDown(true);
-    updateDistances();
+    render();
   } else if (e.key === 'Escape') {
     // Close any visible tooltips first
     if (currentTooltips.length > 0) {
@@ -633,19 +655,17 @@ function onKeyUp(e) {
   if (!isActive || e.key !== 'Alt') return;
   e.preventDefault();
   setAltDown(false);
-  updateDistances();
+  render();
 }
 
-// Scroll handler to update overlay position
+// Scroll handler: overlays use page coordinates, so they only need re-measuring
+// for fixed/sticky content. Coalesce to one redraw per frame.
 function onScroll() {
-  if (!isActive || !selectedElement) return;
-  const rect = selectedElement.getBoundingClientRect();
-  overlay.style.top = `${rect.top + window.scrollY}px`;
-  overlay.style.left = `${rect.left + window.scrollX}px`;
-  
-  // Update anchor, distance and box model overlays
-  placeAnchorOutline();
-  updateDistances();
+  if (!isActive || scrollFrame) return;
+  scrollFrame = requestAnimationFrame(() => {
+    scrollFrame = 0;
+    if (isActive) render();
+  });
 }
 
 // Activate measurement mode
@@ -667,6 +687,8 @@ function activate() {
 function deactivate() {
   if (!isActive) return;
   isActive = false;
+  cancelAnimationFrame(scrollFrame);
+  scrollFrame = 0;
   removeOverlay();
   document.removeEventListener('mousemove', onMouseMove);
   document.removeEventListener('click', onClick, true);

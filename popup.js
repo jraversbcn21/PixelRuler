@@ -102,22 +102,21 @@ document.addEventListener('DOMContentLoaded', () => {
       chrome.tabs.sendMessage(tab.id, { action: 'activate' }, (response) => {
         if (chrome.runtime.lastError) {
           // Si falla, es porque el script no está inyectado, entonces lo inyectamos
+          // CSS primero, para que los overlays nunca aparezcan sin estilo
           console.log('Script not injected yet, injecting...');
-          chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            files: ['measure.js', 'content.js']
-          }, () => {
-            if (chrome.runtime.lastError) {
-              console.error(`Script injection failed: ${chrome.runtime.lastError.message}`);
-              alert(`${translations[currentLang].scriptError} ${chrome.runtime.lastError.message}`);
-              return;
-            }
-
-            activateBtn.disabled = true;
-            deactivateBtn.disabled = false;
-            // Cerrar el popup al activar medición
-            window.close();
-          });
+          const target = { tabId: tab.id };
+          chrome.scripting.insertCSS({ target, files: ['content.css'] })
+            .then(() => chrome.scripting.executeScript({ target, files: ['measure.js', 'content.js'] }))
+            .then(() => {
+              activateBtn.disabled = true;
+              deactivateBtn.disabled = false;
+              // Cerrar el popup al activar medición
+              window.close();
+            })
+            .catch((err) => {
+              console.error(`Script injection failed: ${err.message}`);
+              alert(`${translations[currentLang].scriptError} ${err.message}`);
+            });
         } else {
           // Script ya estaba inyectado y se activó correctamente
           activateBtn.disabled = true;

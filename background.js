@@ -6,9 +6,11 @@ chrome.commands.onCommand.addListener((command) => {
         tab.url.startsWith('https://chrome.google.com')) return;
 
     chrome.tabs.sendMessage(tab.id, { action: 'toggle' }, () => {
-      // Not injected yet: inject it, which activates it
+      // Not injected yet: inject it (CSS first, so overlays never appear unstyled), which activates it
       if (chrome.runtime.lastError) {
-        chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['measure.js', 'content.js'] })
+        const target = { tabId: tab.id };
+        chrome.scripting.insertCSS({ target, files: ['content.css'] })
+          .then(() => chrome.scripting.executeScript({ target, files: ['measure.js', 'content.js'] }))
           .catch(() => {});
       }
     });
